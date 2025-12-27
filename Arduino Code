@@ -1,0 +1,105 @@
+#include <Servo.h>
+
+// Pins
+const int trigPin = 11;
+const int echoPin = 12;
+const int buzzerPin = 7;
+
+// Servo objects
+Servo servo1;   // main radar rotation
+Servo servo2;   // second radar or tilt
+Servo servo3;   // 🔥 fast-action servo
+
+// Servo pins
+const int servoPin1 = 10;
+const int servoPin2 = 9;
+const int servoPin3 = 8;   // 🔹 new servo pin
+
+// Variables
+long duration;
+int distance;
+bool servoTriggered = false;   // to ensure one-time action per detection
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);
+
+  servo1.attach(servoPin1);
+  servo2.attach(servoPin2);
+  servo3.attach(servoPin3);   // attach third servo
+}
+
+void loop() {
+  // Sweep from 0° to 180°
+  for (int angle = 0; angle <= 180; angle++) {
+    moveServos(angle);
+    distance = calculateDistance();
+    buzzerControl(distance);
+    fastServoReaction(distance);  // 🔥 third servo action
+    sendData(angle, distance);
+    delay(30);
+  }
+
+  // Sweep back from 180° to 0°
+  for (int angle = 180; angle >= 0; angle--) {
+    moveServos(angle);
+    distance = calculateDistance();
+    buzzerControl(distance);
+    fastServoReaction(distance);
+    sendData(angle, distance);
+    delay(30);
+  }
+}
+
+// --- Move radar servos (1 & 2) in sync ---
+void moveServos(int angle) {
+  servo1.write(angle);
+  servo2.write(angle);
+}
+
+// --- Ultrasonic distance measurement ---
+int calculateDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+  return distance;
+}
+
+// --- Buzzer control ---
+void buzzerControl(int d) {
+  if (d > 0 && d <= 20) {
+    digitalWrite(buzzerPin, HIGH);
+  } else {
+    digitalWrite(buzzerPin, LOW);
+  }
+}
+
+// --- 🔥 New Feature: Third servo fast action ---
+void fastServoReaction(int d) {
+  if (d > 0 && d <= 20 && !servoTriggered) {
+    servoTriggered = true;
+    servo3.write(0);      // quick start
+    delay(100);
+    servo3.write(180);    // fast sweep
+    delay(200);
+    servo3.write(90);     // reset to middle
+  } 
+  else if (d > 20) {
+    servoTriggered = false;  // reset trigger
+  }
+}
+
+// --- Serial output for Processing ---
+void sendData(int angle, int d) {
+  Serial.print(angle);
+  Serial.print(",");
+  Serial.print(d);
+  Serial.print(".");
+}
