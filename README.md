@@ -115,7 +115,7 @@ This project includes an **AI-based Text-to-Speech (TTS) voice system**.
 
 ## 👨‍💻 Author
 **HAFIZ ABDUL RAFAY**  
-Arduino | AI | AI ASSISTED COODER 
+Arduino | AI ASSISTED COODER 
 
 ---
 
